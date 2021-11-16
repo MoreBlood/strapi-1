@@ -7,7 +7,7 @@
  */
 
 const _ = require('lodash');
-const { GraphQLUpload } = require('apollo-server-koa');
+const { GraphQLUpload } = require('graphql-upload');
 const graphql = require('graphql');
 const { GraphQLJSON } = require('graphql-type-json');
 const { GraphQLDate, GraphQLDateTime } = require('graphql-iso-date');
@@ -17,6 +17,8 @@ const Time = require('../types/time');
 const { toSingular, toInputName } = require('./naming');
 
 const isScalarAttribute = ({ type }) => type && !['component', 'dynamiczone'].includes(type);
+const isTypeAttributeEnabled = (model, attr) =>
+  _.get(strapi.plugins.graphql, `config._schema.graphql.type.${model.globalId}.${attr}`) !== false;
 
 module.exports = {
   /**
@@ -159,18 +161,6 @@ module.exports = {
   },
 
   /**
-   * Remove custom scalar type such as Upload because Apollo automatically adds it in the schema.
-   * but we need to add it to print the schema on our side.
-   *
-   * @return void
-   */
-
-  removeCustomScalar(typeDefs, resolvers) {
-    delete resolvers.Upload;
-    return typeDefs.replace('scalar Upload', '');
-  },
-
-  /**
    * Add custom scalar type such as JSON.
    *
    * @return void
@@ -227,8 +217,9 @@ module.exports = {
   generateInputModel(model, name, { allowIds = false } = {}) {
     const globalId = model.globalId;
     const inputName = `${_.upperFirst(toSingular(name))}Input`;
+    const hasAllAttributesDisabled = Object.keys(model.attributes).every(attr => !isTypeAttributeEnabled(model, attr));
 
-    if (_.isEmpty(model.attributes)) {
+    if (_.isEmpty(model.attributes) || hasAllAttributesDisabled) {
       return `
       input ${inputName} {
         _: String
@@ -244,6 +235,7 @@ module.exports = {
       input ${inputName} {
 
         ${Object.keys(model.attributes)
+          .filter(attributeName => isTypeAttributeEnabled(model, attributeName))
           .map(attributeName => {
             return `${attributeName}: ${this.convertType({
               attribute: model.attributes[attributeName],
@@ -258,6 +250,7 @@ module.exports = {
       input edit${inputName} {
         ${allowIds ? 'id: ID' : ''}
         ${Object.keys(model.attributes)
+          .filter(attributeName => isTypeAttributeEnabled(model, attributeName))
           .map(attributeName => {
             return `${attributeName}: ${this.convertType({
               attribute: model.attributes[attributeName],

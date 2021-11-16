@@ -5,7 +5,6 @@ const validators = require('./common-validators');
 
 const registerProviderActionSchema = yup
   .array()
-  .requiredAllowEmpty()
   .required()
   .of(
     yup
@@ -61,6 +60,9 @@ const registerProviderActionSchema = yup
                 return subCat === undefined;
               }
             ),
+        }),
+        options: yup.object({
+          applyToProperties: yup.array().of(yup.string()),
         }),
       })
       .noUnknown()

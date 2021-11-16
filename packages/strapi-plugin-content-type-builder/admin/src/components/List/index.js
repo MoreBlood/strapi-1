@@ -40,10 +40,11 @@ function List({
   isSub,
   dzName,
 }) {
-  const { formatMessage } = useGlobalContext();
+  const { formatMessage, emitEvent } = useGlobalContext();
   const { isInDevelopmentMode, modifiedData } = useDataManager();
   const { openModalAddField } = useListView();
   const onClickAddField = () => {
+    emitEvent('hasClickedCTBAddFieldBanner');
     const firstComponentIcon = get(
       modifiedData,
       ['components', firstLoopComponentUid, 'schema', 'icon'],
@@ -166,7 +167,9 @@ function List({
       ? formatMessage({
           id: !isSub
             ? `${pluginId}.form.button.add.field.to.${
-                modifiedData.contentType ? modifiedData.contentType.schema.kind : editTarget
+                modifiedData.contentType
+                  ? modifiedData.contentType.schema.kind
+                  : editTarget || 'collectionType'
               }`
             : `${pluginId}.form.button.add.field.to.component`,
           defaultMessage: 'Add another field',

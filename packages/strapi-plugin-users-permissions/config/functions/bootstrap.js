@@ -77,6 +77,7 @@ module.exports = async () => {
       key: '',
       secret: '',
       callback: `${strapi.config.server.url}/auth/instagram/callback`,
+      scope: ['user_profile'],
     },
     vk: {
       enabled: false,
@@ -93,6 +94,50 @@ module.exports = async () => {
       secret: '',
       callback: `${strapi.config.server.url}/auth/twitch/callback`,
       scope: ['user:read:email'],
+    },
+    linkedin: {
+      enabled: false,
+      icon: 'linkedin',
+      key: '',
+      secret: '',
+      callback: `${strapi.config.server.url}/auth/linkedin/callback`,
+      scope: ['r_liteprofile', 'r_emailaddress'],
+    },
+    cognito: {
+      enabled: false,
+      icon: 'aws',
+      key: '',
+      secret: '',
+      subdomain: 'my.subdomain.com',
+      callback: `${strapi.config.server.url}/auth/cognito/callback`,
+      scope: ['email', 'openid', 'profile'],
+    },
+    reddit: {
+      enabled: false,
+      icon: 'reddit',
+      key: '',
+      secret: '',
+      state: true,
+      callback: `${strapi.config.server.url}/auth/reddit/callback`,
+      scope: ['identity'],
+    },
+    auth0: {
+      enabled: false,
+      icon: '',
+      key: '',
+      secret: '',
+      subdomain: 'my-tenant.eu',
+      callback: `${strapi.config.server.url}/auth/auth0/callback`,
+      scope: ['openid', 'email', 'profile'],
+    },
+    cas: {
+      enabled: false,
+      icon: 'book',
+      key: '',
+      secret: '',
+      callback: `${strapi.config.server.url}/auth/cas/callback`,
+      scope: ['openid email'], // scopes should be space delimited
+      subdomain: 'my.subdomain.com/cas',
     },
   };
   const prevGrantConfig = (await pluginStore.get({ key: 'grant' })) || {};
@@ -183,6 +228,7 @@ module.exports = async () => {
     strapi.reload.isWatching = true;
   }
 
-  const { actionProvider } = strapi.admin.services.permission;
-  actionProvider.register(usersPermissionsActions.actions);
+  await strapi.admin.services.permission.actionProvider.registerMany(
+    usersPermissionsActions.actions
+  );
 };
